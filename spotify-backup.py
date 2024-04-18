@@ -13,7 +13,7 @@ def sanitize_filename(name):
 load_dotenv()
 
 # Spotify user URL
-user_url = 'https://open.spotify.com/user/s06ulhqroauhw8vij1jl0p620'
+user_url = os.getenv('SPOTIFY_USER_URL')
 
 # Extract user ID from the URL
 parsed_url = urlparse(user_url)
