@@ -66,42 +66,26 @@ except requests.RequestException as e:
 
 headers = {'Authorization': f'Bearer {access_token}'}
 
-# Get current date and time
-timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-folder_name = f'playlists_{timestamp}'
-folder_path = os.path.join(os.getcwd(), folder_name)
-
-# Create the folder and check for cleanup
-try:
-    os.makedirs(folder_path, exist_ok=True)
-    print(f"Created folder: {folder_path}")
-    cleanup_old_playlists(os.getcwd())
-except Exception as e:
-    print(f'Error creating folder: {e}')
-    exit()
-
 # Fetch and process playlists
+playlist_ids = []
+destination_folder = '/home/loris_cecks/Music'
 try:
     playlists = spotify_api_request(f'https://api.spotify.com/v1/users/{user_id}/playlists', headers)
     for playlist in playlists['items']:
+        playlist_ids.append(playlist['id'])
+        playlist_link = f"https://open.spotify.com/playlist/{playlist['id']}"
         playlist_details = spotify_api_request(f'https://api.spotify.com/v1/playlists/{playlist["id"]}', headers)
         safe_name = sanitize_filename(playlist_details['name'])
-        filename = f"{safe_name}_{timestamp}.txt"
-        filepath = os.path.join(folder_path, filename)
-        with open(filepath, 'w', encoding='utf-8') as file:
-            for item in playlist_details['tracks']['items']:
-                track = item['track']
-                title = track['name']
-                artists = ', '.join(artist['name'] for artist in track['artists'])
-                album = track['album']['name']
-                file.write(f"{title} - {artists} - {album}\n")
-        print(f'Playlist details saved: {filename}')
+        safe_folder_path = os.path.join(destination_folder, safe_name)
+        
+        # Clean up existing folder and create a new one
+        if os.path.exists(safe_folder_path):
+            shutil.rmtree(safe_folder_path)
+        os.makedirs(safe_folder_path, exist_ok=True)
+
+        # Download playlist with spotdl in the specified folder
+        subprocess.run(['git-auto'])
+        subprocess.run(['spotdl', '--playlist', playlist_link, '--output', safe_folder_path])
+
 except requests.RequestException as e:
     print(f'Error fetching playlists: {e}')
-
-# Execute external command
-try:
-    result = subprocess.run(['git-auto'], check=True, text=True, capture_output=True)
-    print(f"'git-auto' command executed successfully:\n{result.stdout}")
-except subprocess.CalledProcessError as e:
-    print(f"'git-auto' command failed with error:\n{e.stderr}")
