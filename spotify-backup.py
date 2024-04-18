@@ -106,6 +106,7 @@ try:
 
 except Exception as e:
     print(f'Error fetching user playlists: {str(e)}')
+
 try:
     result = subprocess.run(['git-auto'], check=True, text=True, capture_output=True)
     print(f"'git-auto' command executed successfully:\n{result.stdout}")
