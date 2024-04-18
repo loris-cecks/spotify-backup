@@ -9,6 +9,20 @@ from dotenv import load_dotenv
 def sanitize_filename(name):
     return "".join(c if c.isalnum() or c in " -_" else "-" for c in name)
 
+# Function to check and clean up old folders
+def cleanup_old_playlists(directory, prefix="playlists_", max_folders=5):
+    # List all folders in the directory
+    all_folders = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isdir(os.path.join(directory, f)) and f.startswith(prefix)]
+    
+    # Check if there are more than max_folders
+    if len(all_folders) > max_folders:
+        # Sort folders by their modification time (oldest first)
+        all_folders.sort(key=lambda x: os.path.getmtime(x))
+        # Remove the oldest folder
+        oldest_folder = all_folders[0]
+        os.rmdir(oldest_folder)
+        print(f"Removed oldest folder: {oldest_folder}")
+
 # Load environment variables
 load_dotenv()
 
@@ -57,9 +71,11 @@ timestamp = now.strftime('%Y%m%d%H%M%S')
 folder_name = f'playlists_{timestamp}'
 folder_path = os.path.join(os.getcwd(), folder_name)
 
-# Create the folder
+# Create the folder and check for cleanup
 try:
     os.makedirs(folder_path, exist_ok=True)
+    print(f"Created folder: {folder_path}")
+    cleanup_old_playlists(os.getcwd())
 except Exception as e:
     print(f'Errore nella creazione della cartella: {str(e)}')
     exit()
